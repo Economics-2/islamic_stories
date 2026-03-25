@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Meta OG Tags for SEO and Social Sharing -->
+    <meta property="og:title" content="MH Academy - ইসলামিক গল্প">
+    <meta property="og:description" content="বাচ্চাদের জন্য শিক্ষণীয় ও মজাদার ইসলামিক গল্পের এক অপূর্ব সংগ্রহ।">
+    <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/3386/3386803.png">
+    <meta property="og:url" content="https://mh-academy-stories.web.app">
+    <meta property="og:type" content="website">
+    
+    <meta name="theme-color" content="#0f766e">
+    <title>MH Academy - ইসলামিক গল্প</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans Bengali', sans-serif;
+            background-color: #f0fdfa; /* Tailwind teal-50 */
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+        
+        .slide-up {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .glass-header {
+            background: rgba(15, 118, 110, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .story-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .story-card:active {
+            transform: scale(0.97);
+        }
+
+        /* Toast */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased h-screen flex flex-col items-center">
+
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="fixed inset-0 bg-teal-700 flex flex-col items-center justify-center z-50 transition-opacity duration-700">
+        <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-2xl slide-up">
+            <i class="ph-fill ph-book-open-text text-6xl text-teal-600"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-white slide-up" style="animation-delay: 0.1s;">MH Academy</h1>
+        <p class="text-teal-100 mt-2 text-lg slide-up" style="animation-delay: 0.2s;">ইসলামিক গল্প</p>
+        <div class="mt-10">
+            <i class="ph ph-spinner-gap animate-spin text-4xl text-teal-300"></i>
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <div id="app" class="w-full max-w-md h-full bg-white shadow-2xl relative flex flex-col hidden overflow-hidden">
+        
+        <!-- Header -->
+        <header class="glass-header text-white p-4 pt-6 pb-4 flex justify-between items-center z-20 shadow-md">
+            <div class="flex items-center gap-3">
+                <i class="ph-fill ph-moon-stars text-2xl text-yellow-300"></i>
+                <h1 class="text-xl font-bold tracking-wide">ইসলামিক গল্প</h1>
+            </div>
+            <button id="install-btn" class="hidden bg-white text-teal-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm flex items-center gap-2 active:bg-teal-50">
+                <i class="ph-bold ph-download-simple"></i>
+                ইন্সটল
+            </button>
+        </header>
+
+        <!-- Home View (Story List) -->
+        <div id="home-view" class="flex-1 overflow-y-auto p-4 bg-slate-50">
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-1">ছোটদের মজার গল্প! 🌟</h2>
+                <p class="text-sm text-gray-500">পড়ো এবং বন্ধুদের সাথে শেয়ার করো</p>
+            </div>
+            
+            <div id="story-list" class="grid grid-cols-1 gap-4 pb-20">
+                <!-- Stories will be injected here via JS -->
+            </div>
+        </div>
+
+        <!-- Story Reader View -->
+        <div id="reader-view" class="absolute inset-0 bg-white z-30 flex flex-col hidden translate-x-full transition-transform duration-300">
+            <!-- Reader Header -->
+            <header class="bg-teal-600 text-white p-4 flex items-center justify-between shadow-md">
+                <button onclick="closeStory()" class="p-2 -ml-2 rounded-full hover:bg-teal-700 active:bg-teal-800 transition-colors">
+                    <i class="ph-bold ph-arrow-left text-xl"></i>
+                </button>
+                <h1 id="reader-title" class="text-lg font-bold truncate flex-1 text-center px-2">গল্প</h1>
+                <button onclick="shareCurrentStory()" class="p-2 -mr-2 rounded-full hover:bg-teal-700 active:bg-teal-800 transition-colors">
+                    <i class="ph-bold ph-share-network text-xl"></i>
+                </button>
+            </header>
+            
+            <!-- Reader Content -->
+            <div class="flex-1 overflow-y-auto p-6 bg-[#fdfbf7]">
+                <div class="max-w-prose mx-auto">
+                    <div id="reader-icon" class="text-6xl text-center mb-6 drop-shadow-md"></div>
+                    <h2 id="reader-headline" class="text-2xl font-bold text-teal-800 mb-6 text-center leading-snug"></h2>
+                    <div id="reader-body" class="text-lg text-gray-700 leading-relaxed space-y-4 pb-12">
+                        <!-- Story text here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast">বার্তা</div>
+
+    <!-- PWA Setup & Application Logic -->
+    <script>
+        // --- 1. Story Data ---
+        const stories = [
+            {
+                id: 1,
+                title: "মহানবীর (সা:) ক্ষমা",
+                icon: "🐪",
+                color: "bg-orange-100 text-orange-600",
+                text: "একদিন মক্কার এক বৃদ্ধা মহিলা প্রতিদিন মহানবী হযরত মুহাম্মদ (সা:) এর যাওয়ার পথে কাঁটা বিছিয়ে রাখত। নবীজী (সা:) কখনোই রাগ করতেন না, নীরবে কাঁটা সরিয়ে চলে যেতেন।<br><br>একদিন নবীজী দেখলেন পথে কোনো কাঁটা নেই। তিনি ভাবলেন, বৃদ্ধা হয়তো অসুস্থ। তিনি সোজা বৃদ্ধার বাড়িতে গিয়ে উপস্থিত হলেন। বৃদ্ধা তো অবাক! যে মানুষের সাথে সে এত খারাপ আচরণ করেছে, সে কিনা তাকে দেখতে এসেছে!<br><br>নবীজীর (সা:) এই অসীম ক্ষমা ও ভালোবাসা দেখে বৃদ্ধা খুব লজ্জিত হলো এবং সাথে সাথে ইসলাম গ্রহণ করল।<br><br><b>শিক্ষা:</b> খারাপ আচরণের জবাব ভালো ব্যবহার দিয়ে দিতে হয়। ক্ষমা হলো সবচেয়ে বড় গুণ।"
+            },
+            {
+                id: 2,
+                title: "হযরত সুলাইমান (আঃ) ও পিপীলিকা",
+                icon: "🐜",
+                color: "bg-emerald-100 text-emerald-600",
+                text: "হযরত সুলাইমান (আঃ) পশুপাখির ভাষা বুঝতে পারতেন। একদিন তিনি তার বিশাল সেনাবাহিনী নিয়ে এক পথ দিয়ে যাচ্ছিলেন।<br><br>সামনেই ছিল একটি পিপীলিকার বাসা। একটি ছোট্ট পিপীলিকা অন্য পিপীলিকাদের বলল, 'হে পিপীলিকারা! তাড়াতাড়ি নিজেদের গর্তে ঢুকে পড়ো। সুলাইমান ও তার সেনাবাহিনী না বুঝেই তোমাদের পায়ের নিচে পিষে ফেলবে!'<br><br>পিপীলিকার এই কথা শুনে হযরত সুলাইমান (আঃ) মুচকি হাসলেন। তিনি সাথে সাথে তাঁর সেনাবাহিনীকে থামার নির্দেশ দিলেন এবং সাবধানে রাস্তা পার হলেন, যাতে একটি পিপীলিকারও ক্ষতি না হয়।<br><br><b>শিক্ষা:</b> আল্লাহর সৃষ্ট কোনো ছোট প্রাণীকেও অবহেলা বা কষ্ট দেওয়া উচিত নয়। সবার প্রতি দয়াশীল হতে হয়।"
+            },
+            {
+                id: 3,
+                title: "সততার পুরস্কার: আব্দুল কাদির জিলানী",
+                icon: "💰",
+                color: "bg-blue-100 text-blue-600",
+                text: "ছোটবেলায় আব্দুল কাদির জিলানী (রহ.) শিক্ষার উদ্দেশ্যে বাগদাদ যাচ্ছিলেন। যাত্রার আগে তার মা তার জামার আস্তিনে ৪০টি স্বর্ণমুদ্রা সেলাই করে দিয়েছিলেন এবং বলেছিলেন, 'বাবা, কখনোই মিথ্যা বলবে না।'<br><br>পথে ডাকাত দল তাদের কাফেলায় আক্রমণ করল। এক ডাকাত ছোট্ট কাদিরকে জিজ্ঞেস করল, 'তোমার কাছে কিছু আছে?' তিনি অকপটে বললেন, 'হ্যাঁ, আমার জামার ভেতরে ৪০টি স্বর্ণমুদ্রা আছে।'<br><br>ডাকাত সর্দার অবাক হয়ে বলল, 'তুমি চাইলে তো মিথ্যা বলতে পারতে!' বালক কাদির উত্তর দিলেন, 'আমার মা আমাকে সবসময় সত্য কথা বলতে বলেছেন। আমি মায়ের আদেশ অমান্য করতে পারি না।'<br><br>এই কথা শুনে ডাকাত সর্দারের হৃদয় কেঁপে উঠল। সে ভাবল, এই ছোট ছেলেটি তার মায়ের কথা এত মানে, আর আমি আমার সৃষ্টিকর্তার কথা অমান্য করে ডাকাতি করছি! সে সাথে সাথে ডাকাতি ছেড়ে ভালো মানুষ হয়ে গেল।<br><br><b>শিক্ষা:</b> সত্যবাদিতা মানুষকে বিপদমুক্ত করে এবং অন্যের জীবনও বদলে দিতে পারে।"
+            },
+            {
+                id: 4,
+                title: "হযরত উমর (রা:) এর ন্যায়বিচার",
+                icon: "⚖️",
+                color: "bg-purple-100 text-purple-600",
+                text: "ইসলামের দ্বিতীয় খলিফা হযরত উমর (রা:) রাতের বেলায় ছদ্মবেশে মদিনার রাস্তায় ঘুরে ঘুরে মানুষের খোঁজখবর নিতেন।<br><br>এক রাতে তিনি দেখলেন, একটি তাঁবুতে এক বৃদ্ধা চুলায় হাঁড়ি বসিয়ে জ্বালানি দিচ্ছেন আর তার ছোট বাচ্চারা কাঁদছে। উমর (রা:) কাছে গিয়ে কারণ জানতে চাইলেন। বৃদ্ধা বললেন, 'ঘরে কোনো খাবার নেই। বাচ্চাদের শান্ত করার জন্য হাঁড়িতে শুধু পানি ও পাথর দিয়ে জ্বাল দিচ্ছি, যেন তারা ভাবে রান্না হচ্ছে এবং এই ভাবতে ভাবতে ঘুমিয়ে পড়ে।'<br><br>খলিফা উমর (রা:) এই কথা শুনে কেঁদে ফেললেন। তিনি দ্রুত বাইতুল মাল (রাষ্ট্রীয় কোষাগার) থেকে আটা ও ঘিয়ের বস্তা নিজের পিঠে তুলে নিলেন। ভৃত্য তাকে সাহায্য করতে চাইলে তিনি বললেন, 'কিয়ামতের দিন আমার পাপের বোঝা তুমি বইবে না, আমাকেই বইতে দাও।'<br><br>তিনি নিজেই সেই খাবার রান্না করে বাচ্চাদের খাওয়ালেন।<br><br><b>শিক্ষা:</b> দায়িত্ববোধ এবং জনগণের প্রতি ভালোবাসা একজন প্রকৃত নেতার প্রধান গুণ।"
+            }
+        ];
+
+        let currentActiveStory = null;
+
+        // --- 2. UI Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Splash screen logic
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                const app = document.getElementById('app');
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.classList.add('hidden');
+                    app.classList.remove('hidden');
+                    app.classList.add('fade-in');
+                    renderStories();
+                }, 700);
+            }, 2500); // 2.5s splash
+        });
+
+        function renderStories() {
+            const list = document.getElementById('story-list');
+            list.innerHTML = '';
+            
+            stories.forEach((story, index) => {
+                const delay = index * 0.1;
+                const card = document.createElement('div');
+                card.className = `story-card bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 cursor-pointer slide-up`;
+                card.style.animationDelay = `${delay}s`;
+                card.onclick = () => openStory(story.id);
+                
+                card.innerHTML = `
+                    <div class="w-14 h-14 flex-shrink-0 rounded-full flex items-center justify-center text-2xl ${story.color}">
+                        ${story.icon}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-lg font-bold text-gray-800 truncate">${story.title}</h3>
+                        <p class="text-sm text-gray-500 truncate">মজাদার ও শিক্ষণীয় গল্প...</p>
+                    </div>
+                    <div class="w-8 h-8 flex items-center justify-center bg-teal-50 rounded-full text-teal-600">
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function openStory(id) {
+            const story = stories.find(s => s.id === id);
+            if (!story) return;
+            
+            currentActiveStory = story;
+            
+            document.getElementById('reader-title').innerText = story.title;
+            document.getElementById('reader-headline').innerText = story.title;
+            document.getElementById('reader-icon').innerText = story.icon;
+            document.getElementById('reader-body').innerHTML = story.text;
+            
+            const readerView = document.getElementById('reader-view');
+            readerView.classList.remove('hidden');
+            // Small delay to allow display:block to apply before animation
+            setTimeout(() => {
+                readerView.style.transform = 'translateX(0)';
+            }, 10);
+        }
+
+        function closeStory() {
+            const readerView = document.getElementById('reader-view');
+            readerView.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                readerView.classList.add('hidden');
+                currentActiveStory = null;
+            }, 300);
+        }
+
+        // --- 3. Share Functionality ---
+        async function shareCurrentStory() {
+            if (!currentActiveStory) return;
+            
+            const plainText = currentActiveStory.text.replace(/<[^>]*>?/gm, ''); // Remove HTML tags
+            const shareText = `📚 *${currentActiveStory.title}*\n\n${plainText}\n\n📲 পড়া হয়েছে "MH Academy - ইসলামিক গল্প" অ্যাপ থেকে!`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: currentActiveStory.title,
+                        text: shareText,
+                        url: window.location.href
+                    });
+                } catch (err) {
+                    console.log('Error sharing:', err);
+                }
+            } else {
+                // Fallback: Copy to clipboard
+                try {
+                    // Use modern clipboard API if available, else fallback to execCommand
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(shareText);
+                    } else {
+                        const textArea = document.createElement("textarea");
+                        textArea.value = shareText;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                    }
+                    showToast('গল্পটি কপি করা হয়েছে! এখন যেকোনো জায়গায় পেস্ট করতে পারেন।');
+                } catch (err) {
+                    showToast('কপি করতে সমস্যা হয়েছে।');
+                }
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // --- 4. Single-File PWA Setup (Blob Technique) ---
+        
+        // A. Create Dynamic Manifest
+        const manifestJSON = {
+            "name": "MH Academy - ইসলামিক গল্প",
+            "short_name": "ইসলামিক গল্প",
+            "description": "বাচ্চাদের জন্য শিক্ষণীয় ইসলামিক গল্প",
+            "start_url": window.location.href,
+            "display": "standalone",
+            "background_color": "#f0fdfa",
+            "theme_color": "#0f766e",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><rect width="256" height="256" fill="#0f766e"/><path d="M192,40H64A24,24,0,0,0,40,64V192a24,24,0,0,0,24,24H192a24,24,0,0,0,24-24V64A24,24,0,0,0,192,40Zm8,152a8,8,0,0,1-8,8H64a8,8,0,0,1-8-8V64a8,8,0,0,1,8-8H192a8,8,0,0,1,8,8Z" fill="#fff"/><circle cx="128" cy="128" r="32" fill="#fff"/></svg>`),
+                    "sizes": "192x192 512x512",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestJSON)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = manifestURL;
+        document.head.appendChild(manifestLink);
+
+        // B. Install Prompt Logic
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+            // Update UI to notify the user they can add to home screen
+            installBtn.classList.remove('hidden');
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+                installBtn.classList.add('hidden');
+            } else {
+                showToast("ইন্সটল করতে ব্রাউজারের মেনু থেকে 'Add to Home Screen' চাপুন।");
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBtn.classList.add('hidden');
+            showToast("অ্যাপটি সফলভাবে ইন্সটল হয়েছে!");
+        });
+
+        // Note on Service Worker:
+        // Due to browser security restrictions, a Service Worker injected via a Blob object 
+        // does not have the correct scope to intercept fetch requests for the current page (Origin).
+        // For standard offline caching in a single HTML file without a real server, 
+        // relying on browser cache and standard HTML5 offline storage is best. 
+        // The manifest setup above already enables the "Add to Homescreen" (PWA Installation) feature!
+
+    </script>
+</body>
+</html>
